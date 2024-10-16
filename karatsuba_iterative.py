@@ -6,26 +6,31 @@ base_value = 1 << bits_per_digit  # 65536
 # A function for calculating the number of digits in a number_______________________________________________________________________________________________________________________________________________
 def get_amount_of_digits(number):  # This function divides the number into groups of 16 bits, since bits_per_digit = 16.
     digits = 0
+
     while number > 0:
         digits += 1
         number >>= bits_per_digit  # OR [number = number / (1 << 65536)] OR [number = number // 2^16]
+
     return digits
 
 # A function for dividing a number into parts using bitwise operations__________________________________________________________________________________________________________________________________
 def split_number(number, low_shift):
     high = number >> low_shift  # shift to the right - remove the lower bits
     low = number - (high << low_shift)     # restoring the lowest digit: (due to the shift, we get zeros, so we also need a difference to get the lowest digit)
+
     return high, low
 
 # A function for calculating bit shifts in bits_____________________________________________________________________________________________________________________________________________________________
-def calculate_shifts(half_min_digits):
-    high = half_min_digits * bits_per_digit
+def calculate_shifts(min_digits):
+    high = min_digits * bits_per_digit
     low = high >> 1
+
     return high, low
 
 # A function for finding the minimum number of digits_______________________________________________________________________________________________________________________________________________________
 def get_min_digits(multiplicand, multiplier):
     min_digits = min(get_amount_of_digits(multiplicand), get_amount_of_digits(multiplier))
+
     return min_digits
 
 # The main function for splitting input numbers by Karatsuba________________________________________________________________________________________________________________________________________________
@@ -86,37 +91,40 @@ def process_stacks(map_branches, move_path, z_stack):
 # 5. The main function of the iterative algorithm__________________________________________________________________________________________________________________________________________________________
 def karatsuba_multiply_iterative(multiplicand, multiplier):
     multiplication_tasks = deque([[multiplicand, multiplier, 0]])  # This stack acts as a storage for intermediate calculations, including splitting numbers into high and low parts and adding new subtasks for further processing.
+
     map_branches = deque()  # a map for processing nodes
     move_path = deque()  # Stores shifts for correct node joining in step 5
+
     z_stack = [deque(), deque(), deque()]  # For intermediate results z0, z1, z2 (step1, step2, step3)
-    subtask_stage_tracker = 0 # This counter shows which branch (z0, z1, z2) is currently being calculated, and helps the algorithm determine when all three branches for the root level of recursion will be completed.
+    subtask_stage_tracker = 0 # This counter shows which branch (z0, z1, z2) is currently being calculated, and helps the algorithm determine when all three branches for the root level will be completed.
 
     # We go through the node stack
     while multiplication_tasks:
         current_task = multiplication_tasks.pop()
+
         current_multiplicand  = current_task[0]
         current_multiplier = current_task[1]
+
         current_branch = current_task[2]
 
         if is_leaf(current_multiplicand , current_multiplier): # If this is the root node, then multiply and save the result
             z_stack[subtask_stage_tracker].append(multiply_leaf(current_multiplicand , current_multiplier))
 
-            # If this is not the last stage, then we continue
-            if subtask_stage_tracker != 2:
+            if subtask_stage_tracker != 2: # If this is not the last stage, then we continue
                 subtask_stage_tracker += 1
         else:
             # If this is not the root node, then split the numbers and add nodes to the stack
             shift_high_bits, shift_low_bits = process_node(multiplication_tasks, current_multiplicand , current_multiplier)
+
             map_branches.append(current_branch)
             move_path.append([shift_high_bits, shift_low_bits])
+
             subtask_stage_tracker = 0
 
-        # collecting the result
-        while z_stack[2]:
+        while z_stack[2]: # collecting the result
             process_stacks(map_branches, move_path, z_stack)
 
-    # Возвращаем финальный результат
-    return z_stack[0][0]
+    return z_stack[0][0] # Returning the final result
 
 
 import random
@@ -125,36 +133,46 @@ import time
 
 # 1. Function for generating test data__________________________________________________________________________________________________________________________________________________
 def generate_test_data(max_digits):  # Passing the limit of the maximum number as a power ([10^[max_digits] - 1])
-    multi_list = [] # Here we will store an array of pairs of generated numbers
+    multi_data = [] # Here we will store an array of pairs of generated numbers
+
     random.seed(2)  # the same random numbers for good comfortable work
-    for j in range(2, max_digits, 1):  # There is no point in raising 10 to 1 degree, so I started with 2
-        multi_list.append([random.randint(10, 10 ** j), random.randint(10, 10 ** j)]) # adding a nested list of pairs of test numbers
-    return multi_list
+
+    for j in range(2, max_digits, 1):
+        multi_data.append([random.randint(10, 10 ** j), random.randint(10, 10 ** j)]) # adding a nested list of pairs of test numbers
+
+    return multi_data
 
 
 # 2. A function for testing the performance of Karatsuba___________________________________________________________________________________
 def test_karatsuba_performance(multi_list):  # Passing a list of pairs of numbers which will multiply
     iterative_results = [] # it will store the results of the iterative Karatsuba algorithm
+
     start = time.process_time()  # fixing the start of the algorithm
     for multi_pair in multi_list: # take a pair of test date for multiply
         iterative_results.append(karatsuba_multiply_iterative(multi_pair[0], multi_pair[1]))
     end = time.process_time()  # fixing the finish of the algorithm
-    print('Iterative algo time elapsed:', end - start) # время затраченное на выполнение
-    return iterative_results  # список результатов метода
+
+    print('Iterative algo time elapsed:', end - start) # time spent on execution
+
+    return iterative_results  # list of method results
 
 
-# 3. Функция для проверки точности результатов Карацубы
+# 3. A function to check the accuracy of Karatsuba results________________________________________________________________________________________________________________________________________
 def check_accuracy(multi_list, iterative_results):
-    true_results = [multi_pair[0] * multi_pair[1] for multi_pair in multi_list] # Вычисляем точные результаты
-    is_accurate = iterative_results == true_results # Проверяем точность
+    true_results = [multi_pair[0] * multi_pair[1] for multi_pair in multi_list]
+
+    is_accurate = iterative_results == true_results
+
     print('Iterative results accurate:', is_accurate)
-    return is_accurate # Возвращаем результат проверки
+
+    return is_accurate
 
 
-# 4. Функция для вывода результатов теста
+# 4. Function for displaying test results_______________________________________________________________________________________________________________________________________________________
 def print_test_results(multi_list, test_element, iterative_results):
     print(f'Test element {test_element}:')
     print(f'{multi_list[test_element][0]} * {multi_list[test_element][1]} =')
+
     print('Long multiplication:', multi_list[test_element][0] * multi_list[test_element][1])
     print('Karatsuba iterative:', iterative_results[test_element])
 
@@ -166,10 +184,12 @@ def print_test_results(multi_list, test_element, iterative_results):
 def run_tests():
     max_digits = 1000 # Random numbers containing up to [10^[max_digits] - 1] digits will be entered into the program.
     multi_data = generate_test_data(max_digits)  # Generating test data
+
     iterative_results = test_karatsuba_performance(multi_data)  # Get iterative Karatsuba results
-    if check_accuracy(multi_data, iterative_results):  # Проверка точности
-        test_element = max_digits - 3  # Выбор тестируемого элемента
-        print_test_results(multi_data, test_element, iterative_results)  # Вывод результатов
+
+    if check_accuracy(multi_data, iterative_results):  # Checking the accuracy
+        test_element =  len(multi_data) - 1   # Selecting the element to be tested
+        print_test_results(multi_data, test_element, iterative_results)  # Output of results
 
 
 # Start tests____________________________________________________________________________________________________________________________________________________________________________________________

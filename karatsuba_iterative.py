@@ -15,7 +15,7 @@ def get_amount_of_digits(number):  # This function divides the number into group
 
 # A function for dividing a number into parts using bitwise operations__________________________________________________________________________________________________________________________________
 def split_number(number, low_shift):
-    high = number >> low_shift  # shift to the right - remove the lower bits
+    high = number >> low_shift  # shift to the right - remove the lower bitshigh = {int} 242886303
     low = number - (high << low_shift)     # restoring the lowest digit: (due to the shift, we get zeros, so we also need a difference to get the lowest digit)
 
     return high, low

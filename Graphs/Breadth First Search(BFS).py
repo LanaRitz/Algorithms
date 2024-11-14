@@ -1,54 +1,67 @@
-def breadth_first_print(graph, source):
-    queue = [source]
-    result = []
+import collections
+
+def bfs_shortest_path(graph, start, goal):
+    queue = collections.deque([start])
+    visited = set([start])
+    parent = {start: None}
+
+    print(f"Starting BFS from '{start}' to find shortest path to '{goal}'")
+
     while queue:
-        current = queue.pop(0)
-        result.append(current)
-        for neighbor in graph[current]:
-            queue.append(neighbor)
-    return result
+        vertex = queue.popleft()
+        print(f"Visiting node '{vertex}', Queue: {list(queue)}")
 
+        if vertex == goal:
+            print("Goal reached!")
+            break
 
-def run_tests():
-    # Пример 1:
-    graph1 = {
-        'a': ['b', 'c'],
-        'b': ['d', 'e'],
-        'c': [],
-        'd': [],
-        'e': []
-    }
-    expected1 = ['a', 'b', 'c', 'd', 'e']
-    result1 = breadth_first_print(graph1, 'a')
-    print("Test 1 - Expected:", expected1)
-    print("Test 1 - Result:", result1)
-    assert result1 == expected1, "Test 1 Failed!"
-    print("Test 1 Passed!\n")
+        for neighbor in graph[vertex]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                parent[neighbor] = vertex
+                queue.append(neighbor)
+                print(f"Visited '{neighbor}', added to queue with parent '{vertex}'")
 
-    # Пример
-    graph2 = {
-        'a': ['b', 'c', 'd'],
-        'b': ['e', 'f'],
-        'c': ['g'],
-        'd': ['h', 'i'],
-        'e': [],
-        'f': ['j', 'k'],
-        'g': ['l'],
-        'h': [],
-        'i': ['m'],
-        'j': [],
-        'k': [],
-        'l': [],
-        'm': []
-    }
-    expected2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm']
-    result2 = breadth_first_print(graph2, 'a')
-    print("Test 2 - Expected:", expected2)
-    print("Test 2 - Result:", result2)
-    assert result2 == expected2, "Test 2 Failed!"
-    print("Test 2 Passed!\n")
+    path = []
+    step = goal
+    while step is not None:
+        path.append(step)
+        step = parent[step]
 
+    path.reverse()
+
+    if path[0] == start:
+        print(f"Shortest path from '{start}' to '{goal}': {path}")
+    else:
+        print(f"No path found from '{start}' to '{goal}'")
+
+    return path if path[0] == start else None
 
 
 if __name__ == '__main__':
-    run_tests()
+    graph1 = {
+        'A': ['B', 'C'],
+        'B': ['A', 'D', 'E'],
+        'C': ['A', 'F'],
+        'D': ['B'],
+        'E': ['B', 'F'],
+        'F': ['C', 'E']
+    }
+
+    print(bfs_shortest_path(graph1, 'A', 'F'))  # Ожидаемый результат: ['A', 'C', 'F']
+    print(bfs_shortest_path(graph1, 'A', 'D'))  # Ожидаемый результат: ['A', 'B', 'D']
+    print(bfs_shortest_path(graph1, 'A', 'A'))  # Ожидаемый результат: ['A']
+    print(bfs_shortest_path(graph1, 'B', 'F'))  # Ожидаемый результат: ['B', 'E', 'F']
+    print(bfs_shortest_path(graph1, 'C', 'D'))  # Ожидаемый результат: ['C', 'A', 'B', 'D']
+
+    graph2 = {
+        '1': ['2', '3'],
+        '2': ['1', '4', '5'],
+        '3': ['1', '6'],
+        '4': ['2'],
+        '5': ['2', '6'],
+        '6': ['3', '5']
+    }
+
+    print(bfs_shortest_path(graph2, '1', '6'))  # Ожидаемый результат: ['1', '3', '6']
+    print(bfs_shortest_path(graph2, '4', '6'))  # Ожидаемый результат: ['4', '2', '5', '6']
